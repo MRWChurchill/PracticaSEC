@@ -1,0 +1,86 @@
+/**
+ * Establecer estado de investigación según fechas y hallazgo.
+ *
+ * @param {Hallazgo} Celda que establece el estado de hallazgo, si o no.
+ * @param {Fecha_propuesta} Celda que muestra la fecha propuesta.
+ * @param {Fecha_cierre} Celda que muestra la fecha real de cierre.
+ * @param {Fecha_actual} puede establecerse una fecha, sino ocupar función hoy().
+ * @return {status} El estado de la investigación del caso.
+ * @customfunction
+ */
+function LATAM_STATUS(HALLAZGO, Fecha_propuesta, Fecha_cierre,Fecha_actual) {
+  if (
+    (HALLAZGO === "Sin Hallazgo")
+  ) {
+    return "INSPECCIÓN SIN HALLAZGOS";
+ } else if (
+    (HALLAZGO === "Existe Hallazgo") &&  (Fecha_cierre === "") && (Fecha_propuesta >= Fecha_actual)
+  )  {
+    return "ABIERTO";
+  } else if (
+    (HALLAZGO === "Existe Hallazgo") && (Fecha_propuesta >= Fecha_cierre)  && (Fecha_propuesta !== "") && (Fecha_cierre !== "")
+  )
+    {
+    return "CERRADO EN PLAZO";
+  } else if (
+    (HALLAZGO === "Existe Hallazgo") && ((Fecha_propuesta < Fecha_cierre) || (Fecha_propuesta < Fecha_actual)) && (Fecha_propuesta !== "") && (Fecha_cierre !== "")
+  ) {
+    return "CERRADO FUERA DE PLAZO";
+  } else if (
+    (HALLAZGO === "Existe Hallazgo") && (Fecha_cierre === "")  && (Fecha_propuesta < Fecha_actual) && (Fecha_propuesta !== "")
+  ) {
+    return "VENCIDO";
+  } else if (
+    (HALLAZGO === "Existe Hallazgo") && (Fecha_cierre === "")  && (Fecha_propuesta === "")
+  ) {
+    return "FALTAN DATOS";
+  } else if (
+    (HALLAZGO === "")
+  ) {
+    return;
+  }
+}
+
+/**
+ * Establece promedio de status por País, Proveedor y mes de Cierre.
+ *
+ * @param {Pais} Nombre completo del país en el que ocurre el hallazgo.
+ * @param {Proveedor} Proveedor del servicio.
+ * @param {Mes} Mes de cierre de investigación, solo tres primeras iniciales en minúscula.
+ * @return {Promedio} El promedio del API, según condiciones establecidas.
+ * @customfunction
+ */
+
+function LATAM_API(Pais, Proveedor, Mes) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("API");
+  //var sheet = SpreadsheetApp.getActiveSheet();
+  var dataRange = sheet.getDataRange();
+  var data = dataRange.getValues();
+  var sum = 0.0;
+  var count = 0.0;
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][2] == Pais && data[i][3] == Proveedor && data[i][19] == Mes) {
+      if (data[i][17]=="CERRADO EN PLAZO"){
+       sum = sum + 1;
+      count++; 
+      }
+      else if (data[i][17]=="CERRADO FUERA DE PLAZO"){
+      sum = sum + 0.85;
+      count++; 
+      }
+      else if (data[i][17]=="VENCIDO"){
+      sum = sum + 0.70;
+      count++;
+      }
+
+    }
+  }
+  if (sum == 0.0){
+    return "SH"
+  }
+
+  else{
+    sum = sum/count;
+    return sum;
+  }
+}
